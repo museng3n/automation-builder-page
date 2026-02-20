@@ -112,7 +112,7 @@ export default function AutomationBuilderPage() {
     const urlParams = new URLSearchParams(window.location.search)
     const urlToken = urlParams.get('token')
     if (urlToken) {
-      localStorage.setItem('authToken', urlToken)
+      localStorage.setItem('triggerio_token', urlToken)
       window.history.replaceState({}, '', window.location.pathname)
     }
   }, [])
