@@ -109,6 +109,15 @@ export default function AutomationBuilderPage() {
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search)
+    const urlToken = urlParams.get('token')
+    if (urlToken) {
+      localStorage.setItem('authToken', urlToken)
+      window.history.replaceState({}, '', window.location.pathname)
+    }
+  }, [])
+
+  useEffect(() => {
     if (!isAuthenticated()) {
       window.location.href = URLS.AUTH
     }
