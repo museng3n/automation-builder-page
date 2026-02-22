@@ -180,6 +180,9 @@ export default function AutomationBuilderPage() {
   const handleSaveDraft = async () => {
     try {
       setSaving(true)
+      console.log("Payload:", JSON.stringify(buildRulePayload(), null, 2))
+      console.log("Rule ID:", ruleId)
+      console.log("Endpoint:", ruleId ? ENDPOINTS.AUTOMATION.BY_ID(ruleId) : ENDPOINTS.AUTOMATION.BASE)
       if (ruleId) {
         await apiClient.put(ENDPOINTS.AUTOMATION.BY_ID(ruleId), {
           ...buildRulePayload(),
@@ -203,6 +206,9 @@ export default function AutomationBuilderPage() {
   const handleSaveAndActivate = async () => {
     try {
       setSaving(true)
+      console.log("Payload:", JSON.stringify(buildRulePayload(), null, 2))
+      console.log("Rule ID:", ruleId)
+      console.log("Endpoint:", ruleId ? ENDPOINTS.AUTOMATION.BY_ID(ruleId) : ENDPOINTS.AUTOMATION.BASE)
       if (ruleId) {
         await apiClient.put(ENDPOINTS.AUTOMATION.BY_ID(ruleId), {
           ...buildRulePayload(),
