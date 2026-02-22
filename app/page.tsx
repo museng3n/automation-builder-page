@@ -107,14 +107,21 @@ export default function AutomationBuilderPage() {
   ])
 
   const [saving, setSaving] = useState(false)
+  const [loadingRule, setLoadingRule] = useState(false)
+  const [ruleId, setRuleId] = useState<string | null>(null)
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search)
     const urlToken = urlParams.get('token')
     if (urlToken) {
       localStorage.setItem('triggerio_token', urlToken)
-      window.history.replaceState({}, '', window.location.pathname)
     }
+    const id = urlParams.get('ruleId')
+    if (id) {
+      setRuleId(id)
+    }
+    // Clean URL but preserve params for reload
+    window.history.replaceState({}, '', window.location.pathname)
   }, [])
 
   useEffect(() => {
@@ -122,6 +129,37 @@ export default function AutomationBuilderPage() {
       window.location.href = URLS.AUTH
     }
   }, [])
+
+  useEffect(() => {
+    if (!ruleId) return
+    const loadRule = async () => {
+      try {
+        setLoadingRule(true)
+        const response = await apiClient.get(ENDPOINTS.AUTOMATION.BY_ID(ruleId))
+        const rule = response.data?.data || response.data
+        if (rule) {
+          if (rule.name) setRuleName(rule.name)
+          if (rule.description) setDescription(rule.description)
+          if (rule.triggerWord) setTriggerWord(rule.triggerWord)
+          if (rule.excludedWords) setExcludedWords(Array.isArray(rule.excludedWords) ? rule.excludedWords.join("، ") : rule.excludedWords)
+          if (rule.similarWords) setSimilarWords(rule.similarWords)
+          if (rule.triggers) setSelectedTriggers(rule.triggers)
+          if (rule.instagramPosts) setInstagramPosts(rule.instagramPosts)
+          if (rule.facebookPosts) setFacebookPosts(rule.facebookPosts)
+          if (rule.conditionsEnabled !== undefined) setConditionsEnabled(rule.conditionsEnabled)
+          if (rule.conditions) setConditions(rule.conditions)
+          if (rule.actions) setActions(rule.actions)
+          if (rule.milestonesEnabled !== undefined) setMilestonesEnabled(rule.milestonesEnabled)
+          if (rule.milestones) setMilestones(rule.milestones)
+        }
+      } catch (err) {
+        console.error("Failed to load rule:", err)
+      } finally {
+        setLoadingRule(false)
+      }
+    }
+    loadRule()
+  }, [ruleId])
 
   const buildRulePayload = () => ({
     name: ruleName,
@@ -142,10 +180,17 @@ export default function AutomationBuilderPage() {
   const handleSaveDraft = async () => {
     try {
       setSaving(true)
-      await apiClient.post(ENDPOINTS.AUTOMATION.BASE, {
-        ...buildRulePayload(),
-        status: "draft",
-      })
+      if (ruleId) {
+        await apiClient.put(ENDPOINTS.AUTOMATION.BY_ID(ruleId), {
+          ...buildRulePayload(),
+          status: "draft",
+        })
+      } else {
+        await apiClient.post(ENDPOINTS.AUTOMATION.BASE, {
+          ...buildRulePayload(),
+          status: "draft",
+        })
+      }
       alert("تم الحفظ كمسودة")
     } catch (err: any) {
       console.error("Failed to save draft:", err)
@@ -158,10 +203,17 @@ export default function AutomationBuilderPage() {
   const handleSaveAndActivate = async () => {
     try {
       setSaving(true)
-      await apiClient.post(ENDPOINTS.AUTOMATION.BASE, {
-        ...buildRulePayload(),
-        status: "active",
-      })
+      if (ruleId) {
+        await apiClient.put(ENDPOINTS.AUTOMATION.BY_ID(ruleId), {
+          ...buildRulePayload(),
+          status: "active",
+        })
+      } else {
+        await apiClient.post(ENDPOINTS.AUTOMATION.BASE, {
+          ...buildRulePayload(),
+          status: "active",
+        })
+      }
       alert("تم حفظ وتفعيل القاعدة")
     } catch (err: any) {
       console.error("Failed to save rule:", err)
