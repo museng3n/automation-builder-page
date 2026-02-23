@@ -87,8 +87,12 @@ export default function AutomationBuilderPage() {
   const [excludedWords, setExcludedWords] = useState("غير مهتم، لا أريد")
   const [similarWords, setSimilarWords] = useState<string[]>(["مهتمة", "أريد", "أبغى", "أرغب"])
   const [selectedTriggers, setSelectedTriggers] = useState<string[]>(["comment"])
+  const [instagramEnabled, setInstagramEnabled] = useState(true)
   const [instagramPosts, setInstagramPosts] = useState<string[]>(["Post 1", "Post 2"])
+  const [newInstagramPost, setNewInstagramPost] = useState("")
+  const [facebookEnabled, setFacebookEnabled] = useState(false)
   const [facebookPosts, setFacebookPosts] = useState<string[]>([])
+  const [newFacebookPost, setNewFacebookPost] = useState("")
   const [conditionsEnabled, setConditionsEnabled] = useState(true)
   const [conditions, setConditions] = useState<Condition[]>([
     { id: "1", platform: "instagram", interactionType: "save", count: 1, timePeriod: "week", connector: "AND" },
@@ -144,8 +148,14 @@ export default function AutomationBuilderPage() {
           if (rule.excludedWords) setExcludedWords(Array.isArray(rule.excludedWords) ? rule.excludedWords.join("، ") : rule.excludedWords)
           if (rule.similarWords) setSimilarWords(rule.similarWords)
           if (rule.triggers) setSelectedTriggers(rule.triggers)
-          if (rule.instagramPosts) setInstagramPosts(rule.instagramPosts)
-          if (rule.facebookPosts) setFacebookPosts(rule.facebookPosts)
+          if (rule.instagramPosts) {
+            setInstagramPosts(rule.instagramPosts)
+            setInstagramEnabled(rule.instagramPosts.length > 0)
+          }
+          if (rule.facebookPosts) {
+            setFacebookPosts(rule.facebookPosts)
+            setFacebookEnabled(rule.facebookPosts.length > 0)
+          }
           if (rule.conditionsEnabled !== undefined) setConditionsEnabled(rule.conditionsEnabled)
           if (rule.conditions) setConditions(rule.conditions)
           if (rule.actions) setActions(rule.actions)
@@ -525,11 +535,18 @@ export default function AutomationBuilderPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Instagram */}
             <div
-              className={`p-5 rounded-lg border-2 cursor-pointer transition-all ${
-                instagramPosts.length > 0 ? "border-yellow-500 bg-yellow-50" : "border-gray-300 bg-white"
+              className={`p-5 rounded-lg border-2 transition-all ${
+                instagramEnabled ? "border-yellow-500 bg-yellow-50" : "border-gray-300 bg-white"
               }`}
             >
-              <div className="flex items-center justify-between mb-3">
+              <div
+                className="flex items-center justify-between mb-3 cursor-pointer"
+                onClick={() => {
+                  const next = !instagramEnabled
+                  setInstagramEnabled(next)
+                  if (!next) setInstagramPosts([])
+                }}
+              >
                 <div className="flex items-center gap-3">
                   <svg className="w-8 h-8 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
                     <path
@@ -541,21 +558,98 @@ export default function AutomationBuilderPage() {
                   <div>
                     <p className="font-bold text-gray-900">Instagram</p>
                     <p className="text-xs text-gray-600">
-                      {instagramPosts.length > 0 ? `${instagramPosts.length} منشورات محددة` : "لم يتم التحديد"}
+                      {instagramEnabled && instagramPosts.length > 0
+                        ? `${instagramPosts.length} منشورات محددة`
+                        : "لم يتم التحديد"}
                     </p>
                   </div>
                 </div>
-                <input type="checkbox" checked={instagramPosts.length > 0} onChange={() => {}} className="w-5 h-5" />
+                <input
+                  type="checkbox"
+                  checked={instagramEnabled}
+                  onChange={() => {}}
+                  className="w-5 h-5 text-purple-600 rounded cursor-pointer"
+                />
               </div>
+
+              {instagramEnabled && (
+                <div className="space-y-3 mt-2">
+                  <div className="flex gap-2">
+                    <Input
+                      value={newInstagramPost}
+                      onChange={(e) => setNewInstagramPost(e.target.value)}
+                      placeholder="أدخل رابط أو ID المنشور"
+                      className="text-right bg-white flex-1"
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" && newInstagramPost.trim()) {
+                          setInstagramPosts([...instagramPosts, newInstagramPost.trim()])
+                          setNewInstagramPost("")
+                        }
+                      }}
+                    />
+                    <Button
+                      variant="outline"
+                      className="gap-1 whitespace-nowrap"
+                      style={{ backgroundColor: "#7C3AED", color: "white" }}
+                      onClick={() => {
+                        if (newInstagramPost.trim()) {
+                          setInstagramPosts([...instagramPosts, newInstagramPost.trim()])
+                          setNewInstagramPost("")
+                        }
+                      }}
+                    >
+                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path
+                          fillRule="evenodd"
+                          d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                      + إضافة منشور
+                    </Button>
+                  </div>
+                  {instagramPosts.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {instagramPosts.map((post, idx) => (
+                        <span
+                          key={idx}
+                          className="inline-flex items-center gap-1 px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-sm"
+                        >
+                          {post}
+                          <button
+                            onClick={() => setInstagramPosts(instagramPosts.filter((_, i) => i !== idx))}
+                            className="hover:text-red-600 mr-1"
+                          >
+                            <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                              <path
+                                fillRule="evenodd"
+                                d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                                clipRule="evenodd"
+                              />
+                            </svg>
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Facebook */}
             <div
-              className={`p-5 rounded-lg border-2 cursor-pointer transition-all ${
-                facebookPosts.length > 0 ? "border-yellow-500 bg-yellow-50" : "border-gray-300 bg-white"
+              className={`p-5 rounded-lg border-2 transition-all ${
+                facebookEnabled ? "border-yellow-500 bg-yellow-50" : "border-gray-300 bg-white"
               }`}
             >
-              <div className="flex items-center justify-between mb-3">
+              <div
+                className="flex items-center justify-between mb-3 cursor-pointer"
+                onClick={() => {
+                  const next = !facebookEnabled
+                  setFacebookEnabled(next)
+                  if (!next) setFacebookPosts([])
+                }}
+              >
                 <div className="flex items-center gap-3">
                   <svg className="w-8 h-8 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
                     <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
@@ -563,12 +657,82 @@ export default function AutomationBuilderPage() {
                   <div>
                     <p className="font-bold text-gray-900">Facebook</p>
                     <p className="text-xs text-gray-600">
-                      {facebookPosts.length > 0 ? `${facebookPosts.length} منشورات محددة` : "لم يتم التحديد"}
+                      {facebookEnabled && facebookPosts.length > 0
+                        ? `${facebookPosts.length} منشورات محددة`
+                        : "لم يتم التحديد"}
                     </p>
                   </div>
                 </div>
-                <input type="checkbox" checked={facebookPosts.length > 0} onChange={() => {}} className="w-5 h-5" />
+                <input
+                  type="checkbox"
+                  checked={facebookEnabled}
+                  onChange={() => {}}
+                  className="w-5 h-5 text-blue-600 rounded cursor-pointer"
+                />
               </div>
+
+              {facebookEnabled && (
+                <div className="space-y-3 mt-2">
+                  <div className="flex gap-2">
+                    <Input
+                      value={newFacebookPost}
+                      onChange={(e) => setNewFacebookPost(e.target.value)}
+                      placeholder="أدخل رابط أو ID المنشور"
+                      className="text-right bg-white flex-1"
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" && newFacebookPost.trim()) {
+                          setFacebookPosts([...facebookPosts, newFacebookPost.trim()])
+                          setNewFacebookPost("")
+                        }
+                      }}
+                    />
+                    <Button
+                      variant="outline"
+                      className="gap-1 whitespace-nowrap"
+                      style={{ backgroundColor: "#3B82F6", color: "white" }}
+                      onClick={() => {
+                        if (newFacebookPost.trim()) {
+                          setFacebookPosts([...facebookPosts, newFacebookPost.trim()])
+                          setNewFacebookPost("")
+                        }
+                      }}
+                    >
+                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path
+                          fillRule="evenodd"
+                          d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                      + إضافة منشور
+                    </Button>
+                  </div>
+                  {facebookPosts.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {facebookPosts.map((post, idx) => (
+                        <span
+                          key={idx}
+                          className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm"
+                        >
+                          {post}
+                          <button
+                            onClick={() => setFacebookPosts(facebookPosts.filter((_, i) => i !== idx))}
+                            className="hover:text-red-600 mr-1"
+                          >
+                            <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                              <path
+                                fillRule="evenodd"
+                                d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                                clipRule="evenodd"
+                              />
+                            </svg>
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 
