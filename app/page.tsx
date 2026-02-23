@@ -102,6 +102,16 @@ export default function AutomationBuilderPage() {
   const [saving, setSaving] = useState(false)
   const [loadingRule, setLoadingRule] = useState(false)
   const [ruleId, setRuleId] = useState<string | null>(null)
+  const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null)
+
+  const showToast = (message: string, type: "success" | "error") => {
+    setToast({ message, type })
+    setTimeout(() => setToast(null), 3000)
+  }
+
+  const notifyParent = (event: string, data?: Record<string, any>) => {
+    window.parent.postMessage({ source: "automation-builder", event, ...data }, "*")
+  }
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search)
@@ -208,10 +218,11 @@ export default function AutomationBuilderPage() {
           status: "draft",
         })
       }
-      alert("تم الحفظ كمسودة")
+      showToast("تم الحفظ كمسودة", "success")
+      notifyParent("rule-saved", { status: "draft", ruleId })
     } catch (err: any) {
       console.error("Failed to save draft:", err)
-      alert(err.response?.data?.message || "فشل في حفظ المسودة")
+      showToast(err.response?.data?.message || "فشل في حفظ المسودة", "error")
     } finally {
       setSaving(false)
     }
@@ -231,10 +242,11 @@ export default function AutomationBuilderPage() {
           status: "active",
         })
       }
-      alert("تم حفظ وتفعيل القاعدة")
+      showToast("تم حفظ وتفعيل القاعدة", "success")
+      notifyParent("rule-saved", { status: "active", ruleId })
     } catch (err: any) {
       console.error("Failed to save rule:", err)
-      alert(err.response?.data?.message || "فشل في حفظ القاعدة")
+      showToast(err.response?.data?.message || "فشل في حفظ القاعدة", "error")
     } finally {
       setSaving(false)
     }
@@ -290,6 +302,19 @@ export default function AutomationBuilderPage() {
 
   return (
     <div dir="rtl" className="min-h-screen bg-gradient-to-br from-gray-100 to-gray-200">
+      {/* Toast Notification */}
+      {toast && (
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[100] animate-in fade-in slide-in-from-top-2 duration-300">
+          <div
+            className={`px-6 py-3 rounded-lg shadow-lg text-white font-semibold text-sm ${
+              toast.type === "success" ? "bg-green-600" : "bg-red-600"
+            }`}
+          >
+            {toast.message}
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <header className="bg-white shadow-sm border-b sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
