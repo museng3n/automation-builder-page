@@ -81,34 +81,23 @@ const interactionTypes = [
 ]
 
 export default function AutomationBuilderPage() {
-  const [ruleName, setRuleName] = useState("قاعدة جديدة - فاعل Instagram")
-  const [description, setDescription] = useState("عند حفظ والتعليق على البوست، يتم ترقيته من Contact إلى Lead")
-  const [triggerWord, setTriggerWord] = useState("مهتم")
-  const [excludedWords, setExcludedWords] = useState("غير مهتم، لا أريد")
-  const [similarWords, setSimilarWords] = useState<string[]>(["مهتمة", "أريد", "أبغى", "أرغب"])
-  const [selectedTriggers, setSelectedTriggers] = useState<string[]>(["comment"])
-  const [instagramEnabled, setInstagramEnabled] = useState(true)
-  const [instagramPosts, setInstagramPosts] = useState<string[]>(["Post 1", "Post 2"])
+  const [ruleName, setRuleName] = useState("")
+  const [description, setDescription] = useState("")
+  const [triggerWord, setTriggerWord] = useState("")
+  const [excludedWords, setExcludedWords] = useState("")
+  const [similarWords, setSimilarWords] = useState<string[]>([])
+  const [selectedTriggers, setSelectedTriggers] = useState<string[]>([])
+  const [instagramEnabled, setInstagramEnabled] = useState(false)
+  const [instagramPosts, setInstagramPosts] = useState<string[]>([])
   const [newInstagramPost, setNewInstagramPost] = useState("")
   const [facebookEnabled, setFacebookEnabled] = useState(false)
   const [facebookPosts, setFacebookPosts] = useState<string[]>([])
   const [newFacebookPost, setNewFacebookPost] = useState("")
-  const [conditionsEnabled, setConditionsEnabled] = useState(true)
-  const [conditions, setConditions] = useState<Condition[]>([
-    { id: "1", platform: "instagram", interactionType: "save", count: 1, timePeriod: "week", connector: "AND" },
-    { id: "2", platform: "instagram", interactionType: "comment", count: 1, timePeriod: "week" },
-  ])
-  // Updated actions state with new types
-  const [actions, setActions] = useState<Action[]>([
-    { id: "1", type: "dm", message: "شكراً لاهتمامك! سنرسل لك تفاصيل المنتج..." },
-    { id: "2", type: "save_contact", category: "حفظ الفيديو" },
-  ])
-  const [milestonesEnabled, setMilestonesEnabled] = useState(true)
-  const [milestones, setMilestones] = useState<Milestone[]>([
-    { id: "1", metric: "clicks", threshold: 1, message: "جيداً! إنها بداية سنساوى معنا بهذا" },
-    { id: "2", metric: "clicks", threshold: 5, message: "برافو! 5 أشخاص دخلوا - مع دخمك SHARES بالإنستغرام" },
-    { id: "3", metric: "clicks", threshold: 10, message: "تميّز 10! الفتاح - مشاهده خاصة بالانتقال" },
-  ])
+  const [conditionsEnabled, setConditionsEnabled] = useState(false)
+  const [conditions, setConditions] = useState<Condition[]>([])
+  const [actions, setActions] = useState<Action[]>([])
+  const [milestonesEnabled, setMilestonesEnabled] = useState(false)
+  const [milestones, setMilestones] = useState<Milestone[]>([])
 
   const [saving, setSaving] = useState(false)
   const [loadingRule, setLoadingRule] = useState(false)
@@ -171,22 +160,39 @@ export default function AutomationBuilderPage() {
     loadRule()
   }, [ruleId])
 
-  const buildRulePayload = () => ({
-    platform: instagramEnabled ? "instagram" : facebookEnabled ? "facebook" : "instagram",
-    name: ruleName,
-    description,
-    triggerWord,
-    excludedWords: excludedWords.split("،").map((w: string) => w.trim()).filter(Boolean),
-    similarWords,
-    triggers: selectedTriggers,
-    instagramPosts,
-    facebookPosts,
-    conditionsEnabled,
-    conditions,
-    actions,
-    milestonesEnabled,
-    milestones,
-  })
+  const buildRulePayload = () => {
+    const payload: Record<string, any> = {
+      name: ruleName,
+    }
+
+    if (instagramEnabled || facebookEnabled) {
+      payload.platform = instagramEnabled ? "instagram" : "facebook"
+    }
+    if (description.trim()) payload.description = description
+    if (triggerWord.trim()) payload.triggerWord = triggerWord
+
+    const parsedExcluded = excludedWords.split("،").map((w: string) => w.trim()).filter(Boolean)
+    if (parsedExcluded.length > 0) payload.excludedWords = parsedExcluded
+
+    if (similarWords.length > 0) payload.similarWords = similarWords
+    if (selectedTriggers.length > 0) payload.triggers = selectedTriggers
+    if (instagramEnabled && instagramPosts.length > 0) payload.instagramPosts = instagramPosts
+    if (facebookEnabled && facebookPosts.length > 0) payload.facebookPosts = facebookPosts
+
+    if (conditionsEnabled) {
+      payload.conditionsEnabled = true
+      if (conditions.length > 0) payload.conditions = conditions
+    }
+
+    if (actions.length > 0) payload.actions = actions
+
+    if (milestonesEnabled) {
+      payload.milestonesEnabled = true
+      if (milestones.length > 0) payload.milestones = milestones
+    }
+
+    return payload
+  }
 
   const handleSaveDraft = async () => {
     try {
