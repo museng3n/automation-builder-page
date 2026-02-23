@@ -305,13 +305,13 @@ export default function AutomationBuilderPage() {
               <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                 <path d="M7.707 10.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V6a1 1 0 10-2 0v5.586l-1.293-1.293z" />
               </svg>
-              {saving ? "جاري الحفظ..." : "حفظ كمسودة"}
+              {saving ? "جاري الحفظ... قد يستغرق حتى دقيقة" : "حفظ كمسودة"}
             </Button>
             <Button className="gap-2 text-white" style={{ backgroundColor: "#7C3AED" }} onClick={handleSaveAndActivate} disabled={saving}>
               <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
                 <path d="M7.707 10.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V6a1 1 0 10-2 0v5.586l-1.293-1.293z" />
               </svg>
-              {saving ? "جاري الحفظ..." : "حفظ القاعدة"}
+              {saving ? "جاري الحفظ... قد يستغرق حتى دقيقة" : "حفظ القاعدة"}
             </Button>
           </div>
         </div>
@@ -1057,7 +1057,7 @@ export default function AutomationBuilderPage() {
               <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                 <path d="M7.707 10.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V6a1 1 0 10-2 0v5.586l-1.293-1.293z" />
               </svg>
-              {saving ? "جاري الحفظ..." : "حفظ كمسودة"}
+              {saving ? "جاري الحفظ... قد يستغرق حتى دقيقة" : "حفظ كمسودة"}
             </Button>
             <Button className="gap-2 text-white" style={{ backgroundColor: "#7C3AED" }} onClick={handleSaveAndActivate} disabled={saving}>
               <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
@@ -1067,7 +1067,7 @@ export default function AutomationBuilderPage() {
                   clipRule="evenodd"
                 />
               </svg>
-              {saving ? "جاري الحفظ..." : "حفظ وتفعيل"}
+              {saving ? "جاري الحفظ... قد يستغرق حتى دقيقة" : "حفظ وتفعيل"}
             </Button>
           </div>
         </div>
