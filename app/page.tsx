@@ -172,6 +172,7 @@ export default function AutomationBuilderPage() {
   }, [ruleId])
 
   const buildRulePayload = () => ({
+    platform: instagramEnabled ? "instagram" : facebookEnabled ? "facebook" : "instagram",
     name: ruleName,
     description,
     triggerWord,
