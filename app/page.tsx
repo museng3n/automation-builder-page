@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { apiClient } from "@/shared-api-config/api/client"
 import ENDPOINTS from "@/shared-api-config/api/endpoints"
 import { isAuthenticated } from "@/shared-api-config/utils/auth"
@@ -93,6 +94,8 @@ export default function AutomationBuilderPage() {
   const [facebookEnabled, setFacebookEnabled] = useState(false)
   const [facebookPosts, setFacebookPosts] = useState<string[]>([])
   const [newFacebookPost, setNewFacebookPost] = useState("")
+  const [addPostModalPlatform, setAddPostModalPlatform] = useState<"instagram" | "facebook" | null>(null)
+  const [modalPostInput, setModalPostInput] = useState("")
   const [conditionsEnabled, setConditionsEnabled] = useState(false)
   const [conditions, setConditions] = useState<Condition[]>([])
   const [actions, setActions] = useState<Action[]>([])
@@ -600,53 +603,46 @@ export default function AutomationBuilderPage() {
 
               {instagramEnabled && (
                 <div className="space-y-3 mt-2">
-                  <div className="flex gap-2">
-                    <Input
-                      value={newInstagramPost}
-                      onChange={(e) => setNewInstagramPost(e.target.value)}
-                      placeholder="أدخل رابط أو ID المنشور"
-                      className="text-right bg-white flex-1"
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" && newInstagramPost.trim()) {
-                          setInstagramPosts([...instagramPosts, newInstagramPost.trim()])
-                          setNewInstagramPost("")
-                        }
-                      }}
-                    />
-                    <Button
-                      variant="outline"
-                      className="gap-1 whitespace-nowrap"
-                      style={{ backgroundColor: "#7C3AED", color: "white" }}
-                      onClick={() => {
-                        if (newInstagramPost.trim()) {
-                          setInstagramPosts([...instagramPosts, newInstagramPost.trim()])
-                          setNewInstagramPost("")
-                        }
-                      }}
-                    >
-                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                        <path
-                          fillRule="evenodd"
-                          d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"
-                          clipRule="evenodd"
-                        />
-                      </svg>
-                      + إضافة منشور
-                    </Button>
-                  </div>
+                  <Button
+                    variant="outline"
+                    className="gap-1 whitespace-nowrap w-full"
+                    style={{ backgroundColor: "#7C3AED", color: "white" }}
+                    onClick={() => {
+                      setModalPostInput("")
+                      setAddPostModalPlatform("instagram")
+                    }}
+                  >
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                      <path
+                        fillRule="evenodd"
+                        d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                    + إضافة منشور
+                  </Button>
                   {instagramPosts.length > 0 && (
-                    <div className="flex flex-wrap gap-2">
+                    <div className="space-y-2">
                       {instagramPosts.map((post, idx) => (
-                        <span
+                        <div
                           key={idx}
-                          className="inline-flex items-center gap-1 px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-sm"
+                          className="flex items-center justify-between p-3 bg-purple-50 border border-purple-200 rounded-lg"
                         >
-                          {post}
+                          <div className="flex items-center gap-2 min-w-0">
+                            <svg className="w-4 h-4 text-purple-500 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                              <path
+                                fillRule="evenodd"
+                                d="M4 5a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V7a2 2 0 00-2-2h-1.586a1 1 0 01-.707-.293l-1.121-1.121A2 2 0 0011.172 3H8.828a2 2 0 00-1.414.586L6.293 4.707A1 1 0 015.586 5H4zm6 9a3 3 0 100-6 3 3 0 000 6z"
+                                clipRule="evenodd"
+                              />
+                            </svg>
+                            <span className="text-sm text-purple-800 truncate">{post}</span>
+                          </div>
                           <button
                             onClick={() => setInstagramPosts(instagramPosts.filter((_, i) => i !== idx))}
-                            className="hover:text-red-600 mr-1"
+                            className="text-gray-400 hover:text-red-600 shrink-0 p-1 rounded hover:bg-red-50 transition-colors"
                           >
-                            <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                               <path
                                 fillRule="evenodd"
                                 d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
@@ -654,7 +650,7 @@ export default function AutomationBuilderPage() {
                               />
                             </svg>
                           </button>
-                        </span>
+                        </div>
                       ))}
                     </div>
                   )}
@@ -699,53 +695,42 @@ export default function AutomationBuilderPage() {
 
               {facebookEnabled && (
                 <div className="space-y-3 mt-2">
-                  <div className="flex gap-2">
-                    <Input
-                      value={newFacebookPost}
-                      onChange={(e) => setNewFacebookPost(e.target.value)}
-                      placeholder="أدخل رابط أو ID المنشور"
-                      className="text-right bg-white flex-1"
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" && newFacebookPost.trim()) {
-                          setFacebookPosts([...facebookPosts, newFacebookPost.trim()])
-                          setNewFacebookPost("")
-                        }
-                      }}
-                    />
-                    <Button
-                      variant="outline"
-                      className="gap-1 whitespace-nowrap"
-                      style={{ backgroundColor: "#3B82F6", color: "white" }}
-                      onClick={() => {
-                        if (newFacebookPost.trim()) {
-                          setFacebookPosts([...facebookPosts, newFacebookPost.trim()])
-                          setNewFacebookPost("")
-                        }
-                      }}
-                    >
-                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                        <path
-                          fillRule="evenodd"
-                          d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"
-                          clipRule="evenodd"
-                        />
-                      </svg>
-                      + إضافة منشور
-                    </Button>
-                  </div>
+                  <Button
+                    variant="outline"
+                    className="gap-1 whitespace-nowrap w-full"
+                    style={{ backgroundColor: "#3B82F6", color: "white" }}
+                    onClick={() => {
+                      setModalPostInput("")
+                      setAddPostModalPlatform("facebook")
+                    }}
+                  >
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                      <path
+                        fillRule="evenodd"
+                        d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                    + إضافة منشور
+                  </Button>
                   {facebookPosts.length > 0 && (
-                    <div className="flex flex-wrap gap-2">
+                    <div className="space-y-2">
                       {facebookPosts.map((post, idx) => (
-                        <span
+                        <div
                           key={idx}
-                          className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm"
+                          className="flex items-center justify-between p-3 bg-blue-50 border border-blue-200 rounded-lg"
                         >
-                          {post}
+                          <div className="flex items-center gap-2 min-w-0">
+                            <svg className="w-4 h-4 text-blue-500 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                              <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
+                            </svg>
+                            <span className="text-sm text-blue-800 truncate">{post}</span>
+                          </div>
                           <button
                             onClick={() => setFacebookPosts(facebookPosts.filter((_, i) => i !== idx))}
-                            className="hover:text-red-600 mr-1"
+                            className="text-gray-400 hover:text-red-600 shrink-0 p-1 rounded hover:bg-red-50 transition-colors"
                           >
-                            <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                               <path
                                 fillRule="evenodd"
                                 d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
@@ -753,7 +738,7 @@ export default function AutomationBuilderPage() {
                               />
                             </svg>
                           </button>
-                        </span>
+                        </div>
                       ))}
                     </div>
                   )}
@@ -1066,6 +1051,74 @@ export default function AutomationBuilderPage() {
           )}
         </section>
       </main>
+
+      {/* Add Post Modal */}
+      <Dialog
+        open={addPostModalPlatform !== null}
+        onOpenChange={(open) => {
+          if (!open) setAddPostModalPlatform(null)
+        }}
+      >
+        <DialogContent className="sm:max-w-md" dir="rtl">
+          <DialogHeader className="text-right">
+            <DialogTitle>
+              {addPostModalPlatform === "instagram" ? "إضافة منشور Instagram" : "إضافة منشور Facebook"}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <label className="text-sm text-gray-700 block">رابط المنشور أو Post ID</label>
+            <Input
+              value={modalPostInput}
+              onChange={(e) => setModalPostInput(e.target.value)}
+              placeholder="https://... أو Post ID"
+              className="text-right"
+              autoFocus
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && modalPostInput.trim()) {
+                  if (addPostModalPlatform === "instagram") {
+                    setInstagramPosts([...instagramPosts, modalPostInput.trim()])
+                  } else {
+                    setFacebookPosts([...facebookPosts, modalPostInput.trim()])
+                  }
+                  setModalPostInput("")
+                  setAddPostModalPlatform(null)
+                  showToast("تمت إضافة المنشور بنجاح", "success")
+                }
+              }}
+            />
+          </div>
+          <DialogFooter className="flex gap-2 sm:justify-start">
+            <Button
+              style={{ backgroundColor: addPostModalPlatform === "instagram" ? "#7C3AED" : "#3B82F6", color: "white" }}
+              onClick={() => {
+                if (!modalPostInput.trim()) {
+                  showToast("الرجاء إدخال رابط أو ID المنشور", "error")
+                  return
+                }
+                if (addPostModalPlatform === "instagram") {
+                  setInstagramPosts([...instagramPosts, modalPostInput.trim()])
+                } else {
+                  setFacebookPosts([...facebookPosts, modalPostInput.trim()])
+                }
+                setModalPostInput("")
+                setAddPostModalPlatform(null)
+                showToast("تمت إضافة المنشور بنجاح", "success")
+              }}
+            >
+              إضافة
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setModalPostInput("")
+                setAddPostModalPlatform(null)
+              }}
+            >
+              إلغاء
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Sticky Bottom Action Bar */}
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t shadow-lg z-50">
