@@ -139,6 +139,8 @@ const ENDPOINTS = {
       TEST: '/integrations/brevo/test',
       STATUS: '/integrations/brevo/status',
     },
+    INSTAGRAM_POSTS: '/integrations/instagram/posts',
+    FACEBOOK_POSTS: '/integrations/facebook/posts',
   },
   
   // ==========================================

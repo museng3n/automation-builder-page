@@ -96,6 +96,11 @@ export default function AutomationBuilderPage() {
   const [newFacebookPost, setNewFacebookPost] = useState("")
   const [addPostModalPlatform, setAddPostModalPlatform] = useState<"instagram" | "facebook" | null>(null)
   const [modalPostInput, setModalPostInput] = useState("")
+  const [galleryPosts, setGalleryPosts] = useState<{ id: string; caption: string; mediaUrl: string | null; thumbnailUrl: string | null; timestamp: string }[]>([])
+  const [galleryLoading, setGalleryLoading] = useState(false)
+  const [galleryError, setGalleryError] = useState("")
+  const [gallerySelected, setGallerySelected] = useState<string[]>([])
+  const [galleryMode, setGalleryMode] = useState(true)
   const [conditionsEnabled, setConditionsEnabled] = useState(false)
   const [conditions, setConditions] = useState<Condition[]>([])
   const [actions, setActions] = useState<Action[]>([])
@@ -607,9 +612,27 @@ export default function AutomationBuilderPage() {
                     variant="outline"
                     className="gap-1 whitespace-nowrap w-full"
                     style={{ backgroundColor: "#7C3AED", color: "white" }}
-                    onClick={() => {
+                    onClick={async () => {
                       setModalPostInput("")
+                      setGallerySelected([])
+                      setGalleryError("")
+                      setGalleryPosts([])
+                      setGalleryMode(true)
                       setAddPostModalPlatform("instagram")
+                      setGalleryLoading(true)
+                      try {
+                        const res = await apiClient.get(ENDPOINTS.INTEGRATIONS.INSTAGRAM_POSTS)
+                        setGalleryPosts(res.data?.posts || [])
+                        if ((res.data?.posts || []).length === 0) {
+                          setGalleryError("لا توجد منشورات في هذا الحساب")
+                        }
+                      } catch (err: any) {
+                        const msg = err.response?.data?.message || "لا يمكن جلب المنشورات. تحقق من اتصال Instagram."
+                        setGalleryError(msg)
+                        setGalleryMode(false)
+                      } finally {
+                        setGalleryLoading(false)
+                      }
                     }}
                   >
                     <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
@@ -699,9 +722,27 @@ export default function AutomationBuilderPage() {
                     variant="outline"
                     className="gap-1 whitespace-nowrap w-full"
                     style={{ backgroundColor: "#3B82F6", color: "white" }}
-                    onClick={() => {
+                    onClick={async () => {
                       setModalPostInput("")
+                      setGallerySelected([])
+                      setGalleryError("")
+                      setGalleryPosts([])
+                      setGalleryMode(true)
                       setAddPostModalPlatform("facebook")
+                      setGalleryLoading(true)
+                      try {
+                        const res = await apiClient.get(ENDPOINTS.INTEGRATIONS.FACEBOOK_POSTS)
+                        setGalleryPosts(res.data?.posts || [])
+                        if ((res.data?.posts || []).length === 0) {
+                          setGalleryError("لا توجد منشورات في هذا الحساب")
+                        }
+                      } catch (err: any) {
+                        const msg = err.response?.data?.message || "لا يمكن جلب المنشورات. تحقق من اتصال Facebook."
+                        setGalleryError(msg)
+                        setGalleryMode(false)
+                      } finally {
+                        setGalleryLoading(false)
+                      }
                     }}
                   >
                     <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
@@ -1052,71 +1093,232 @@ export default function AutomationBuilderPage() {
         </section>
       </main>
 
-      {/* Add Post Modal */}
+      {/* Add Post Gallery Modal */}
       <Dialog
         open={addPostModalPlatform !== null}
         onOpenChange={(open) => {
-          if (!open) setAddPostModalPlatform(null)
+          if (!open) {
+            setAddPostModalPlatform(null)
+            setGalleryPosts([])
+            setGallerySelected([])
+            setGalleryError("")
+          }
         }}
       >
-        <DialogContent className="sm:max-w-md" dir="rtl">
+        <DialogContent className="sm:max-w-3xl max-h-[85vh] flex flex-col" dir="rtl">
           <DialogHeader className="text-right">
             <DialogTitle>
-              {addPostModalPlatform === "instagram" ? "إضافة منشور Instagram" : "إضافة منشور Facebook"}
+              {addPostModalPlatform === "instagram" ? "اختر منشورات Instagram" : "اختر منشورات Facebook"}
             </DialogTitle>
+            {!galleryLoading && !galleryError && galleryPosts.length > 0 && (
+              <p className="text-sm text-gray-500 mt-1">{gallerySelected.length} منشور محدد من {galleryPosts.length}</p>
+            )}
           </DialogHeader>
-          <div className="space-y-3 py-2">
-            <label className="text-sm text-gray-700 block">رابط المنشور أو Post ID</label>
-            <Input
-              value={modalPostInput}
-              onChange={(e) => setModalPostInput(e.target.value)}
-              placeholder="https://... أو Post ID"
-              className="text-right"
-              autoFocus
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && modalPostInput.trim()) {
-                  if (addPostModalPlatform === "instagram") {
-                    setInstagramPosts([...instagramPosts, modalPostInput.trim()])
-                  } else {
-                    setFacebookPosts([...facebookPosts, modalPostInput.trim()])
-                  }
-                  setModalPostInput("")
-                  setAddPostModalPlatform(null)
-                  showToast("تمت إضافة المنشور بنجاح", "success")
-                }
-              }}
-            />
+
+          <div className="flex-1 overflow-y-auto min-h-0 py-2">
+            {/* Loading State */}
+            {galleryLoading && (
+              <div className="flex flex-col items-center justify-center py-16 gap-3">
+                <div className="w-10 h-10 border-4 border-gray-200 rounded-full animate-spin" style={{ borderTopColor: addPostModalPlatform === "instagram" ? "#7C3AED" : "#3B82F6" }} />
+                <p className="text-sm text-gray-500">جاري جلب المنشورات...</p>
+              </div>
+            )}
+
+            {/* Error State */}
+            {!galleryLoading && galleryError && (
+              <div className="flex flex-col items-center justify-center py-12 gap-4">
+                <div className="w-16 h-16 rounded-full bg-red-50 flex items-center justify-center">
+                  <svg className="w-8 h-8 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                  </svg>
+                </div>
+                <p className="text-sm text-gray-700 text-center max-w-xs">{galleryError}</p>
+                {/* Fallback to manual input */}
+                {!galleryMode && (
+                  <div className="w-full max-w-sm space-y-3 mt-2">
+                    <p className="text-xs text-gray-500 text-center">يمكنك إدخال Post ID يدوياً:</p>
+                    <div className="flex gap-2">
+                      <Input
+                        value={modalPostInput}
+                        onChange={(e) => setModalPostInput(e.target.value)}
+                        placeholder="أدخل Post ID"
+                        className="text-right flex-1"
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" && modalPostInput.trim()) {
+                            if (addPostModalPlatform === "instagram") {
+                              setInstagramPosts([...instagramPosts, modalPostInput.trim()])
+                            } else {
+                              setFacebookPosts([...facebookPosts, modalPostInput.trim()])
+                            }
+                            setModalPostInput("")
+                            setAddPostModalPlatform(null)
+                            showToast("تمت إضافة المنشور بنجاح", "success")
+                          }
+                        }}
+                      />
+                      <Button
+                        style={{ backgroundColor: addPostModalPlatform === "instagram" ? "#7C3AED" : "#3B82F6", color: "white" }}
+                        onClick={() => {
+                          if (!modalPostInput.trim()) {
+                            showToast("الرجاء إدخال Post ID", "error")
+                            return
+                          }
+                          if (addPostModalPlatform === "instagram") {
+                            setInstagramPosts([...instagramPosts, modalPostInput.trim()])
+                          } else {
+                            setFacebookPosts([...facebookPosts, modalPostInput.trim()])
+                          }
+                          setModalPostInput("")
+                          setAddPostModalPlatform(null)
+                          showToast("تمت إضافة المنشور بنجاح", "success")
+                        }}
+                      >
+                        إضافة
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Gallery Grid */}
+            {!galleryLoading && !galleryError && galleryPosts.length > 0 && (
+              <div className="grid grid-cols-3 gap-3">
+                {galleryPosts.map((post) => {
+                  const isSelected = gallerySelected.includes(post.id)
+                  const alreadyAdded = addPostModalPlatform === "instagram"
+                    ? instagramPosts.includes(post.id)
+                    : facebookPosts.includes(post.id)
+                  return (
+                    <button
+                      key={post.id}
+                      type="button"
+                      disabled={alreadyAdded}
+                      className={`relative rounded-lg overflow-hidden border-2 transition-all text-left ${
+                        alreadyAdded
+                          ? "border-gray-200 opacity-50 cursor-not-allowed"
+                          : isSelected
+                            ? addPostModalPlatform === "instagram"
+                              ? "border-purple-500 ring-2 ring-purple-200"
+                              : "border-blue-500 ring-2 ring-blue-200"
+                            : "border-gray-200 hover:border-gray-400"
+                      }`}
+                      onClick={() => {
+                        if (alreadyAdded) return
+                        setGallerySelected((prev) =>
+                          prev.includes(post.id)
+                            ? prev.filter((id) => id !== post.id)
+                            : [...prev, post.id]
+                        )
+                      }}
+                    >
+                      {/* Thumbnail */}
+                      <div className="aspect-square bg-gray-100 relative">
+                        {post.thumbnailUrl || post.mediaUrl ? (
+                          <img
+                            src={post.thumbnailUrl || post.mediaUrl || ""}
+                            alt={post.caption?.slice(0, 30) || "Post"}
+                            className="w-full h-full object-cover"
+                            loading="lazy"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).style.display = "none"
+                            }}
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-gray-300">
+                            <svg className="w-10 h-10" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
+                            </svg>
+                          </div>
+                        )}
+                        {/* Selection checkmark */}
+                        {isSelected && (
+                          <div
+                            className="absolute top-2 left-2 w-6 h-6 rounded-full flex items-center justify-center"
+                            style={{ backgroundColor: addPostModalPlatform === "instagram" ? "#7C3AED" : "#3B82F6" }}
+                          >
+                            <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                            </svg>
+                          </div>
+                        )}
+                        {/* Already added badge */}
+                        {alreadyAdded && (
+                          <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
+                            <span className="text-white text-xs font-bold bg-black/50 px-2 py-1 rounded">تمت الإضافة</span>
+                          </div>
+                        )}
+                        {/* Video badge */}
+                        {post.mediaType === "VIDEO" && (
+                          <div className="absolute top-2 right-2">
+                            <svg className="w-5 h-5 text-white drop-shadow-lg" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
+                            </svg>
+                          </div>
+                        )}
+                      </div>
+                      {/* Caption */}
+                      <div className="p-2">
+                        <p className="text-xs text-gray-600 truncate" dir="auto">
+                          {post.caption ? post.caption.slice(0, 50) + (post.caption.length > 50 ? "..." : "") : "بدون وصف"}
+                        </p>
+                        <p className="text-[10px] text-gray-400 mt-0.5">{post.id}</p>
+                      </div>
+                    </button>
+                  )
+                })}
+              </div>
+            )}
           </div>
-          <DialogFooter className="flex gap-2 sm:justify-start">
-            <Button
-              style={{ backgroundColor: addPostModalPlatform === "instagram" ? "#7C3AED" : "#3B82F6", color: "white" }}
-              onClick={() => {
-                if (!modalPostInput.trim()) {
-                  showToast("الرجاء إدخال رابط أو ID المنشور", "error")
-                  return
-                }
-                if (addPostModalPlatform === "instagram") {
-                  setInstagramPosts([...instagramPosts, modalPostInput.trim()])
-                } else {
-                  setFacebookPosts([...facebookPosts, modalPostInput.trim()])
-                }
-                setModalPostInput("")
-                setAddPostModalPlatform(null)
-                showToast("تمت إضافة المنشور بنجاح", "success")
-              }}
-            >
-              إضافة
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setModalPostInput("")
-                setAddPostModalPlatform(null)
-              }}
-            >
-              إلغاء
-            </Button>
-          </DialogFooter>
+
+          {/* Footer with confirm/cancel */}
+          {!galleryLoading && galleryPosts.length > 0 && (
+            <DialogFooter className="flex gap-2 sm:justify-start border-t pt-4">
+              <Button
+                disabled={gallerySelected.length === 0}
+                style={{ backgroundColor: addPostModalPlatform === "instagram" ? "#7C3AED" : "#3B82F6", color: "white" }}
+                onClick={() => {
+                  if (addPostModalPlatform === "instagram") {
+                    setInstagramPosts([...instagramPosts, ...gallerySelected.filter((id) => !instagramPosts.includes(id))])
+                  } else {
+                    setFacebookPosts([...facebookPosts, ...gallerySelected.filter((id) => !facebookPosts.includes(id))])
+                  }
+                  setAddPostModalPlatform(null)
+                  setGalleryPosts([])
+                  setGallerySelected([])
+                  showToast(`تمت إضافة ${gallerySelected.length} منشور بنجاح`, "success")
+                }}
+              >
+                تأكيد ({gallerySelected.length})
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setAddPostModalPlatform(null)
+                  setGalleryPosts([])
+                  setGallerySelected([])
+                  setGalleryError("")
+                }}
+              >
+                إلغاء
+              </Button>
+            </DialogFooter>
+          )}
+
+          {/* Footer for error-only state (with manual fallback) */}
+          {!galleryLoading && galleryError && galleryMode && (
+            <DialogFooter className="flex gap-2 sm:justify-start border-t pt-4">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setAddPostModalPlatform(null)
+                  setGalleryError("")
+                }}
+              >
+                إغلاق
+              </Button>
+            </DialogFooter>
+          )}
         </DialogContent>
       </Dialog>
 
