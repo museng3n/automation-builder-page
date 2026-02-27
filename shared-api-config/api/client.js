@@ -28,14 +28,22 @@ apiClient.interceptors.request.use(
   }
 );
 
+// Endpoints where 401 means "third-party auth failed", not "JWT expired"
+const SKIP_AUTH_REDIRECT_PATHS = ['/integrations/'];
+
 // Response Interceptor - معالجة الأخطاء
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
     // إذا انتهت صلاحية Token
     if (error.response?.status === 401) {
-      removeToken();
-      window.location.href = URLS.AUTH;
+      const requestUrl = error.config?.url || '';
+      const skipRedirect = SKIP_AUTH_REDIRECT_PATHS.some((path) => requestUrl.includes(path));
+
+      if (!skipRedirect) {
+        removeToken();
+        window.location.href = URLS.AUTH;
+      }
     }
     return Promise.reject(error);
   }
