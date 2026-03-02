@@ -298,6 +298,10 @@ export default function AutomationBuilderPage() {
     setActions(actions.filter((a) => a.id !== id))
   }
 
+  const updateAction = (id: string, field: string, value: string) => {
+    setActions(actions.map((a) => a.id === id ? { ...a, [field]: value } : a))
+  }
+
   const addMilestone = () => {
     const newMilestone: Milestone = {
       id: Date.now().toString(),
@@ -872,21 +876,22 @@ export default function AutomationBuilderPage() {
                     <label className="block text-xs font-semibold text-gray-600 mb-1">نص الرسالة</label>
                     <Textarea
                       placeholder="اكتب رسالتك هنا..."
-                      defaultValue={action.message}
+                      value={action.message || ""}
+                      onChange={(e) => updateAction(action.id, "message", e.target.value)}
                       rows={3}
                       className="text-right"
                     />
                     <p className="text-xs text-gray-500 mt-1">
                       Variables: {"{"}الاسم{"}"} {"{"}المنشور{"}"} {"{"}التاريخ{"}"}
                     </p>
-                    <p className="text-xs text-gray-400 mt-1">Character count: 0/1000</p>
+                    <p className="text-xs text-gray-400 mt-1">Character count: {(action.message || "").length}/1000</p>
                   </div>
                 )}
 
                 {action.type === "save_contact" && (
                   <div>
                     <label className="block text-xs font-semibold text-gray-600 mb-1">تسجيل في</label>
-                    <Select defaultValue={action.category}>
+                    <Select value={action.category || ""} onValueChange={(val) => updateAction(action.id, "category", val)}>
                       <SelectTrigger className="text-right">
                         <SelectValue placeholder="اختر الفئة" />
                       </SelectTrigger>
@@ -907,7 +912,8 @@ export default function AutomationBuilderPage() {
                     <label className="block text-xs font-semibold text-gray-600 mb-1">اسم الوسم</label>
                     <Input
                       placeholder="مثال: مهتم، حفظ الفيديو، متابع نشط"
-                      defaultValue={action.tagName}
+                      value={action.tagName || ""}
+                      onChange={(e) => updateAction(action.id, "tagName", e.target.value)}
                       className="text-right mb-2"
                     />
                     <p className="text-xs text-gray-500 mb-2">Suggested tags:</p>
@@ -915,6 +921,7 @@ export default function AutomationBuilderPage() {
                       {["مهتم", "نشط", "حفظ الفيديو", "مشارك"].map((tag) => (
                         <button
                           key={tag}
+                          onClick={() => updateAction(action.id, "tagName", tag)}
                           className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-xs hover:bg-purple-200"
                         >
                           {tag}
