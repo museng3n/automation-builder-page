@@ -422,7 +422,6 @@ export default function AutomationBuilderPage() {
                       className="w-5 h-5 text-purple-600 rounded"
                     />
                   </div>
-                  <p className="text-xs text-gray-600">{trigger.accuracy}</p>
                 </div>
               ))}
             </div>
@@ -470,7 +469,7 @@ export default function AutomationBuilderPage() {
                       className="w-5 h-5 text-purple-600 rounded"
                     />
                   </div>
-                  <p className="text-xs text-gray-600">{trigger.accuracy}</p>
+                  
                 </div>
               ))}
             </div>
